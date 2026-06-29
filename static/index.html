@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quakr - Seismic Activity & Data Tracking</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR CONTROLS -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="/static/logo.png" alt="Quakr Logo" class="logo-img">
+            </div>
+            
+            <div class="settings-panel">
+                <h2><i class="fa-solid fa-sliders"></i> Settings</h2>
+                
+                <div class="input-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate" name="startDate">
+                </div>
+                
+                <div class="input-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate" name="endDate">
+                </div>
+                
+                <div class="input-group">
+                    <label for="minMagnitude">Minimum Magnitude (<span id="magVal">2.5</span>)</label>
+                    <div class="range-container">
+                        <input type="range" id="minMagnitude" name="minMagnitude" min="0.0" max="8.0" step="0.1" value="2.5">
+                    </div>
+                </div>
+                
+                <button id="runBtn" class="btn btn-primary">
+                    <i class="fa-solid fa-play"></i> Run Data Pipeline
+                </button>
+            </div>
+            
+            <div class="pipeline-progress" id="pipelineProgress">
+                <h2><i class="fa-solid fa-bars-staged"></i> Execution Steps</h2>
+                <ul class="progress-list">
+                    <li id="step-fetch" class="step"><i class="fa-regular fa-circle-dot"></i> Fetch USGS API</li>
+                    <li id="step-clean" class="step"><i class="fa-regular fa-circle-dot"></i> Clean & Filter Data</li>
+                    <li id="step-analyze" class="step"><i class="fa-regular fa-circle-dot"></i> Statistical Analysis</li>
+                    <li id="step-visualize" class="step"><i class="fa-regular fa-circle-dot"></i> Render Charts</li>
+                    <li id="step-save" class="step"><i class="fa-regular fa-circle-dot"></i> Export CSV & JSON</li>
+                    <li id="step-pdf" class="step"><i class="fa-regular fa-circle-dot"></i> Compile PDF Report</li>
+                </ul>
+            </div>
+            
+            <div class="downloads-panel id-hidden" id="downloadsPanel">
+                <h2><i class="fa-solid fa-download"></i> Exports</h2>
+                <div class="download-buttons">
+                    <a href="/api/pipeline/download/csv" target="_blank" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-csv"></i> CSV Dataset
+                    </a>
+                    <a href="/api/pipeline/download/json" target="_blank" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-code"></i> JSON Dataset
+                    </a>
+                    <a href="/api/pipeline/download/pdf" target="_blank" class="btn btn-pdf">
+                        <i class="fa-solid fa-file-pdf"></i> PDF Report
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-title">
+                    <h1>Quakr Dashboard</h1>
+                    <p id="targetRangeDisplay">Active Dataset Bounds: Loading status...</p>
+                </div>
+                <div class="server-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Pipeline Engine Online</span>
+                </div>
+            </header>
+
+            <!-- STATS CARDS -->
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon color-blue">
+                        <i class="fa-solid fa-wave-square"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <h3 id="statTotalCount">-</h3>
+                        <p>Total Earthquakes</p>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon color-red">
+                        <i class="fa-solid fa-temperature-arrow-up"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <h3 id="statMaxMag">-</h3>
+                        <p>Maximum Magnitude</p>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon color-teal">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <h3 id="statAvgMag">-</h3>
+                        <p>Average Magnitude</p>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon color-orange">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                    <div class="kpi-data">
+                        <h3 id="statTsunamiAlerts">-</h3>
+                        <p>Tsunami Warnings</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PLOTS AND INSIGHTS -->
+            <div class="dashboard-body">
+                <!-- CHART DISPLAY PANEL -->
+                <section class="card chart-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-chart-line"></i> Data Charts</h2>
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-chart="magnitude_distribution">Distribution</button>
+                            <button class="tab-btn" data-chart="depth_vs_magnitude">Depth Profile</button>
+                            <button class="tab-btn" data-chart="activity_trend">Chronological Trend</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-loader id-hidden" id="chartLoader">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <p>Generating charts...</p>
+                        </div>
+                        <img id="chartImage" src="" alt="Seismic Data Visualizations" class="chart-img">
+                        <div class="placeholder-overlay" id="chartPlaceholder">
+                            <i class="fa-solid fa-circle-nodes"></i>
+                            <p>Configure settings and run the pipeline to view charts.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DATA INSIGHT TABLES -->
+                <div class="table-section">
+                    <!-- STRONGEST EARTHQUAKES -->
+                    <div class="card table-panel">
+                        <h2><i class="fa-solid fa-bolt"></i> Strongest Earthquakes</h2>
+                        <div class="table-container">
+                            <table id="strongEventsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Time (UTC)</th>
+                                        <th>Mag</th>
+                                        <th>Location</th>
+                                        <th>Depth</th>
+                                        <th>Felt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-placeholder">
+                                        <td colspan="5">No data loaded. Execute pipeline above.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- MOST ACTIVE REGIONS -->
+                    <div class="card table-panel">
+                        <h2><i class="fa-solid fa-earth-americas"></i> Most Active Regions</h2>
+                        <div class="table-container">
+                            <table id="activeRegionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Region</th>
+                                        <th>Event Count</th>
+                                        <th>Max Mag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-placeholder">
+                                        <td colspan="3">No data loaded. Execute pipeline above.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script loading -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
